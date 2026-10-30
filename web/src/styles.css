@@ -1,0 +1,349 @@
+:root {
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body,
+#root {
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #f4f7fb;
+}
+
+.loading-screen {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+}
+
+.auth-screen {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  padding: 40px 0;
+  background:
+    radial-gradient(circle at 15% 15%, rgba(79, 118, 224, 0.13), transparent 28%),
+    radial-gradient(circle at 90% 85%, rgba(42, 91, 200, 0.09), transparent 32%),
+    #f4f7fb;
+}
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 160px;
+}
+
+.auth-brand {
+  width: fit-content;
+  margin: 0 auto 28px;
+}
+
+.brand-mark {
+  width: 42px !important;
+  height: 42px !important;
+  color: #fff !important;
+  background: linear-gradient(145deg, #456de0, #2748ac) !important;
+  box-shadow: 0 7px 16px rgba(49, 88, 200, 0.2);
+}
+
+.brand-name {
+  font-weight: 760 !important;
+  letter-spacing: -0.025em !important;
+}
+
+.auth-card {
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 38px 40px 30px;
+  border: 1px solid #e7ebf2;
+  border-radius: 22px !important;
+  box-shadow: 0 24px 80px rgba(24, 47, 93, 0.08) !important;
+}
+
+.auth-icon {
+  width: 54px !important;
+  height: 54px !important;
+  margin: 0 auto 22px;
+  color: #3158c8 !important;
+  background: #edf1ff !important;
+}
+
+.auth-title,
+.auth-description {
+  text-align: center;
+}
+
+.auth-title {
+  margin-bottom: 8px !important;
+  font-size: 1.75rem !important;
+  font-weight: 740 !important;
+  letter-spacing: -0.04em !important;
+}
+
+.auth-description {
+  margin: 0 auto 27px !important;
+  max-width: 300px;
+  line-height: 1.55 !important;
+}
+
+.auth-form {
+  display: grid;
+  gap: 16px;
+}
+
+.auth-form .MuiButton-root {
+  min-height: 48px;
+  border-radius: 11px;
+  box-shadow: none;
+}
+
+.access-note {
+  display: block;
+  margin-top: 23px !important;
+  text-align: center;
+}
+
+.topbar {
+  color: #17243d !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  border-bottom: 1px solid #e7ebf2;
+  backdrop-filter: blur(12px);
+}
+
+.topbar-content {
+  justify-content: space-between;
+  max-width: 1240px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.new-chat-button {
+  border-color: #d9e0ed !important;
+  color: #34425e !important;
+  border-radius: 10px !important;
+}
+
+.chat-container {
+  display: flex !important;
+  min-height: calc(100vh - 65px);
+  flex-direction: column;
+  padding-top: 48px;
+  padding-bottom: 28px;
+}
+
+.chat-heading {
+  margin: 0 auto 30px;
+  text-align: center;
+}
+
+.eyebrow {
+  color: #5570b7;
+  font-size: 0.68rem !important;
+  font-weight: 750 !important;
+  letter-spacing: 0.13em !important;
+}
+
+.chat-title {
+  margin: 6px 0 10px !important;
+  font-size: clamp(1.8rem, 5vw, 2.45rem) !important;
+  font-weight: 760 !important;
+  letter-spacing: -0.05em !important;
+}
+
+.chat-heading .MuiTypography-body1 {
+  max-width: 600px;
+  margin: 0 auto;
+  font-size: 0.96rem;
+}
+
+.transcript {
+  flex: 1;
+  width: 100%;
+  padding: 4px 0 24px;
+}
+
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 9px;
+  max-width: 470px;
+  margin: 52px auto;
+  padding: 32px 24px;
+  border: 1px solid #e7ebf2;
+  border-radius: 18px !important;
+  background: rgba(255, 255, 255, 0.7) !important;
+  text-align: center;
+}
+
+.empty-avatar,
+.message-avatar {
+  color: #3158c8 !important;
+  background: #edf1ff !important;
+}
+
+.empty-avatar {
+  width: 48px !important;
+  height: 48px !important;
+  margin-bottom: 5px;
+}
+
+.message-list {
+  width: 100%;
+}
+
+.message-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.message-row.user {
+  justify-content: flex-end;
+}
+
+.message-avatar,
+.user-avatar {
+  width: 31px !important;
+  height: 31px !important;
+  flex: 0 0 auto;
+}
+
+.user-avatar {
+  color: #53627d !important;
+  background: #e4e9f2 !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+}
+
+.message-bubble {
+  max-width: min(78%, 720px);
+  padding: 13px 17px;
+  border-radius: 17px !important;
+}
+
+.message-bubble.assistant {
+  border: 1px solid #e5eaf2;
+  border-bottom-left-radius: 5px !important;
+  background: #fff !important;
+}
+
+.message-bubble.user {
+  color: #fff;
+  border-bottom-right-radius: 5px !important;
+  background: #3158c8 !important;
+}
+
+.message-content {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.58 !important;
+}
+
+.typing-bubble {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.composer-area {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  gap: 9px;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 10px 0 0;
+  background: linear-gradient(to bottom, rgba(244, 247, 251, 0.76), #f4f7fb 26%);
+}
+
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px 9px 8px 15px;
+  border: 1px solid #dfe5ef;
+  border-radius: 17px !important;
+  background: #fff !important;
+  box-shadow: 0 8px 25px rgba(23, 43, 82, 0.06) !important;
+}
+
+.composer .MuiOutlinedInput-root,
+.composer .MuiOutlinedInput-notchedOutline {
+  border: 0;
+}
+
+.composer .MuiInputBase-root {
+  padding: 7px 0;
+}
+
+.composer .MuiInputBase-input {
+  line-height: 1.5;
+}
+
+.send-button {
+  width: 42px;
+  height: 42px;
+  color: #fff !important;
+  background: #3158c8 !important;
+}
+
+.send-button:disabled {
+  color: #8795ba !important;
+  background: #e8edf8 !important;
+}
+
+.composer-caption {
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .auth-card {
+    padding: 30px 23px 25px;
+  }
+
+  .topbar-content {
+    min-height: 60px;
+    padding-right: 12px !important;
+    padding-left: 12px !important;
+  }
+
+  .brand-lockup {
+    min-width: 0;
+  }
+
+  .brand-mark {
+    width: 37px !important;
+    height: 37px !important;
+  }
+
+  .new-chat-button {
+    min-width: 0 !important;
+    padding-right: 9px !important;
+    padding-left: 9px !important;
+  }
+
+  .chat-container {
+    min-height: calc(100vh - 60px);
+    padding-top: 34px;
+    padding-bottom: 18px;
+  }
+
+  .message-bubble {
+    max-width: calc(100% - 52px);
+    padding: 11px 14px;
+  }
+
+  .empty-state {
+    margin: 35px auto;
+  }
+}

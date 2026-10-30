@@ -1,0 +1,20 @@
+{
+  "name": "mikeai-chat-api",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Azure Static Web Apps Functions API for MikeAI Chat",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/devServer.js"
+  },
+  "dependencies": {
+    "@azure/ai-projects": "^2.10.0",
+    "@azure/functions": "^4.7.2",
+    "@azure/identity": "^4.14.1",
+    "dotenv": "^16.4.7"
+  }
+}
