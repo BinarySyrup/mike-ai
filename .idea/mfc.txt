@@ -1,6 +1,0 @@
-codex resume 01a117b0-ea80-7a62-9dc5-c33e3395d042
-
-
-I need a new API endpoint that will trigger the processing of the directory of uploaded images. The API will post to an Azure AI Foundry agent named MikeAI. The Azure authentication will be SPA. Store the SPA info in env
-  vars. Request to MikeAI with compare the uploaded image job qualifications with MikeAI and then generate a report for each job posting. I have the info agent name, Project endpoint, and sample code to call the agent.
-
