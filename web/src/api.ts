@@ -1,9 +1,10 @@
 export type ChatReply = {
   reply: string;
-  conversationId: string;
 };
 
-type ErrorPayload = { error?: string };
+export type ChatInputMessage = { role: "user" | "assistant"; content: string };
+
+type ErrorPayload = { error?: string; requestId?: string };
 
 export class ApiError extends Error {
   readonly status: number;
@@ -18,7 +19,9 @@ export class ApiError extends Error {
 async function readError(response: Response): Promise<string> {
   try {
     const body = (await response.json()) as ErrorPayload;
-    if (body.error) return body.error;
+    if (body.error) {
+      return body.requestId ? `${body.error} (Request ID: ${body.requestId})` : body.error;
+    }
   } catch {
     // Use the status-specific fallback when the API did not return JSON.
   }
@@ -58,15 +61,12 @@ export async function logOut(): Promise<void> {
   if (!response.ok) throw new ApiError(await readError(response), response.status);
 }
 
-export async function sendChatMessage(
-  message: string,
-  conversationId: string | null,
-): Promise<ChatReply> {
+export async function sendChatMessage(messages: ChatInputMessage[]): Promise<ChatReply> {
   const response = await fetch("/api/chat", {
     method: "POST",
     credentials: "same-origin",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ message, conversationId: conversationId || undefined }),
+    body: JSON.stringify({ messages }),
   });
 
   if (!response.ok) throw new ApiError(await readError(response), response.status);

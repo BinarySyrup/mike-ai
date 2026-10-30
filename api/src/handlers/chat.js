@@ -1,14 +1,12 @@
 const { app } = require("@azure/functions");
-const {
-  createConversationHandle,
-  getValidSession,
-  resolveConversationHandle,
-} = require("../auth");
+const { getValidSession } = require("../auth");
 const { getRequestId, jsonResponse } = require("../http");
 const { FoundryConfigurationError, sendAgentMessage } = require("../services/foundryAgent");
 
 const MAX_MESSAGE_LENGTH = 10000;
-const MAX_CONVERSATION_ID_LENGTH = 256;
+const MAX_MESSAGES = 40;
+const MAX_CONVERSATION_LENGTH = 30000;
+const MAX_REQUEST_BYTES = 128000;
 
 async function chatMessage(request, context) {
   const requestId = getRequestId(context);
@@ -18,7 +16,7 @@ async function chatMessage(request, context) {
   }
 
   const contentLength = Number(request.headers.get("content-length") || 0);
-  if (contentLength > 16000) {
+  if (contentLength > MAX_REQUEST_BYTES) {
     return jsonResponse(413, { error: "Request is too large.", requestId });
   }
 
@@ -29,28 +27,33 @@ async function chatMessage(request, context) {
     return jsonResponse(400, { error: "Request body must be valid JSON.", requestId });
   }
 
-  const message = body && typeof body.message === "string" ? body.message : "";
-  const conversationHandle = body && typeof body.conversationId === "string" ? body.conversationId : undefined;
-  if (!message.trim() || message.length > MAX_MESSAGE_LENGTH) {
-    return jsonResponse(400, { error: `Message must be between 1 and ${MAX_MESSAGE_LENGTH} characters.`, requestId });
-  }
-  if (conversationHandle && conversationHandle.length > MAX_CONVERSATION_ID_LENGTH) {
-    return jsonResponse(400, { error: "Conversation identifier is invalid.", requestId });
+  const messages = body && Array.isArray(body.messages) ? body.messages : [];
+  if (messages.length === 0 || messages.length > MAX_MESSAGES) {
+    return jsonResponse(400, { error: `Send between 1 and ${MAX_MESSAGES} messages. Start a new chat if needed.`, requestId });
   }
 
-  const conversationId = conversationHandle
-    ? resolveConversationHandle(conversationHandle, session)
-    : undefined;
-  if (conversationHandle && !conversationId) {
-    return jsonResponse(400, { error: "Conversation identifier is invalid.", requestId });
+  let totalCharacters = 0;
+  const validatedMessages = [];
+  for (const item of messages) {
+    if (!item || !["user", "assistant"].includes(item.role)
+      || typeof item.content !== "string"
+      || item.content.trim().length === 0
+      || item.content.length > MAX_MESSAGE_LENGTH) {
+      return jsonResponse(400, { error: "Conversation message is invalid.", requestId });
+    }
+    totalCharacters += item.content.length;
+    if (totalCharacters > MAX_CONVERSATION_LENGTH) {
+      return jsonResponse(413, { error: "Conversation is too long. Start a new chat to continue.", requestId });
+    }
+    validatedMessages.push({ role: item.role, content: item.content });
+  }
+  if (validatedMessages[0].role !== "user" || validatedMessages.at(-1).role !== "user") {
+    return jsonResponse(400, { error: "Conversation must start and end with a user message.", requestId });
   }
 
   try {
-    const result = await sendAgentMessage({ message, conversationId });
-    return jsonResponse(200, {
-      reply: result.reply,
-      conversationId: createConversationHandle(result.conversationId, session),
-    });
+    const result = await sendAgentMessage({ messages: validatedMessages });
+    return jsonResponse(200, { reply: result.reply });
   } catch (error) {
     if (error instanceof FoundryConfigurationError) {
       context.error(JSON.stringify({ event: "foundry_configuration_error", requestId }));
@@ -60,9 +63,32 @@ async function chatMessage(request, context) {
     context.error(JSON.stringify({
       event: "chat_request_failed",
       requestId,
-      errorName: error instanceof Error ? error.name : "UnknownError",
-      statusCode: Number.isInteger(error?.status) ? error.status : undefined,
-      errorCode: typeof error?.code === "string" ? error.code : undefined,
+      operation: typeof error?.operation === "string" ? error.operation : undefined,
+      errorName: typeof error?.providerErrorName === "string"
+        ? error.providerErrorName
+        : error instanceof Error
+          ? error.name
+          : "UnknownError",
+      statusCode: Number.isInteger(error?.statusCode)
+        ? error.statusCode
+        : Number.isInteger(error?.status)
+          ? error.status
+          : undefined,
+      errorCode: typeof error?.errorCode === "string"
+        ? error.errorCode
+        : typeof error?.code === "string"
+          ? error.code
+          : undefined,
+      errorParam: typeof error?.errorParam === "string"
+        ? error.errorParam
+        : typeof error?.param === "string"
+          ? error.param
+          : undefined,
+      errorType: typeof error?.errorType === "string"
+        ? error.errorType
+        : typeof error?.type === "string"
+          ? error.type
+          : undefined,
     }));
     return jsonResponse(502, { error: "The assistant could not respond. Please try again.", requestId });
   }

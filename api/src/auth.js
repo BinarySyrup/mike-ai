@@ -141,35 +141,6 @@ function hasValidSession(request) {
   return getValidSession(request) !== null;
 }
 
-function createConversationHandle(conversationId, session) {
-  const payload = Buffer.from(JSON.stringify({ conversationId })).toString("base64url");
-  const signature = sign(`${session.nonce}.${payload}`, getSessionSecret());
-  return `${payload}.${signature}`;
-}
-
-function resolveConversationHandle(handle, session) {
-  if (typeof handle !== "string") return undefined;
-  const separator = handle.lastIndexOf(".");
-  if (separator <= 0) return undefined;
-
-  const payload = handle.slice(0, separator);
-  const signature = handle.slice(separator + 1);
-  const expectedBytes = Buffer.from(sign(`${session.nonce}.${payload}`, getSessionSecret()), "base64url");
-  const signatureBytes = Buffer.from(signature, "base64url");
-  if (signatureBytes.length !== expectedBytes.length || !crypto.timingSafeEqual(signatureBytes, expectedBytes)) {
-    return undefined;
-  }
-
-  try {
-    const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
-    return typeof decoded.conversationId === "string" && decoded.conversationId.length <= 256
-      ? decoded.conversationId
-      : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 module.exports = {
   AuthConfigurationError,
   createSessionCookie,
@@ -178,7 +149,5 @@ module.exports = {
   getSessionSecret,
   getValidSession,
   isValidAccessCode,
-  createConversationHandle,
-  resolveConversationHandle,
   hasValidSession,
 };

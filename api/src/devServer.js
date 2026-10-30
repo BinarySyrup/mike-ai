@@ -8,7 +8,7 @@ require("dotenv").config({ path: path.resolve(__dirname, "../../.env") });
 const { authLogin, authSession, authLogout } = require("./handlers/auth");
 const { chatMessage } = require("./handlers/chat");
 
-const MAX_BODY_BYTES = 16 * 1024;
+const MAX_BODY_BYTES = 128 * 1024;
 const routes = new Map([
   ["POST /api/auth/login", authLogin],
   ["GET /api/auth/session", authSession],

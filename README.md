@@ -72,7 +72,7 @@ The chatbot web app is built to connect to an Azure AI Foundry Agent. The fronte
 - **Access:** An Azure Functions API validates a shared pool of access codes configured in server-side environment variables. The app will not include an access-code management screen; the pool will be managed outside the app. Codes provide access control, not individual user identities.
 - **Sessions:** A valid code opens a normal browser web session using a signed, HTTP-only cookie. Users will not need to re-enter it for each chat action. The session expires after 12 hours. Removing a code stops future sign-ins; existing sessions remain active until expiry. Rotating `SESSION_SECRET` invalidates all sessions.
 - **Authentication logs:** Server logs record authentication attempts, including the submitted code. Log access should be restricted because the codes appear verbatim.
-- **Conversations:** The app keeps the active transcript and a signed, session-scoped conversation handle in page memory only; it does not save chat history. Each new chat starts fresh. Azure AI Foundry stores the active conversation; deletion and retention behavior have not been configured.
+- **Conversations:** The app keeps the active transcript in page memory only and does not save chat history or create a Foundry conversation/thread. Each request sends the current transcript as Responses API `input` with the configured `agent_reference`; each new chat starts fresh. Retention for individual Foundry responses follows the Azure service settings.
 
 ### Web app structure and setup
 

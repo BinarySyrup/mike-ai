@@ -36,7 +36,6 @@ export default function App() {
   const [loginBusy, setLoginBusy] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [conversationId, setConversationId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [chatError, setChatError] = useState("");
@@ -98,7 +97,6 @@ export default function App() {
 
   function clearChat() {
     setMessages([]);
-    setConversationId(null);
     setDraft("");
     setChatError("");
   }
@@ -108,14 +106,18 @@ export default function App() {
     const message = draft.trim();
     if (!message || sending) return;
 
-    setMessages((current) => [...current, { id: crypto.randomUUID(), role: "user", content: message }]);
+    const userMessage = { id: crypto.randomUUID(), role: "user" as const, content: message };
+    const transcript = [
+      ...messages.map(({ role, content }) => ({ role, content })),
+      { role: "user" as const, content: message },
+    ];
+    setMessages((current) => [...current, userMessage]);
     setSending(true);
     setDraft("");
     setChatError("");
 
     try {
-      const response = await sendChatMessage(message, conversationId);
-      setConversationId(response.conversationId);
+      const response = await sendChatMessage(transcript);
       setMessages((current) => [...current, {
         id: crypto.randomUUID(),
         role: "assistant",
@@ -129,6 +131,7 @@ export default function App() {
       } else {
         setChatError(errorMessage(error));
         setDraft(message);
+        setMessages((current) => current.filter((item) => item.id !== userMessage.id));
       }
     } finally {
       setSending(false);
