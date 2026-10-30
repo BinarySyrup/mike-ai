@@ -203,14 +203,29 @@ cython_debug/
 #   could uncomment the following to ignore the entire vscode folder
 # .vscode/
 
-# Node.js and Azure Static Web Apps
+# Node.js and Vite
 node_modules/
 web/dist/
-api/local.settings.json
-api/.func/
+api/dist/
+coverage/
+web/coverage/
+api/coverage/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Local environment files and Azure tooling state
+.env.*
+!.env.example
+local.settings.json
+.func/
+.swa/
 api/bin/
 api/obj/
-*.log
+
+# IDE workspace state
+.idea/
 
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
