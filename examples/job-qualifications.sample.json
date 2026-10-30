@@ -1,0 +1,25 @@
+{
+  "job_title": "Senior Software Architect",
+  "qualifications": [
+    {
+      "text": "At least 8 years of software architecture experience.",
+      "type": "required",
+      "source_text": "Required: 8+ years of software architecture experience."
+    },
+    {
+      "text": "Experience designing REST APIs and distributed systems.",
+      "type": "required",
+      "source_text": "Experience designing REST APIs and distributed systems."
+    },
+    {
+      "text": "Experience with AWS or Azure cloud platforms.",
+      "type": "required",
+      "source_text": "Hands-on experience with AWS or Azure."
+    },
+    {
+      "text": "Healthcare industry experience.",
+      "type": "preferred",
+      "source_text": "Healthcare industry experience is preferred."
+    }
+  ]
+}
