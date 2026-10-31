@@ -21,6 +21,7 @@ import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
+import ReactMarkdown from "react-markdown";
 import { ApiError, checkSession, logIn, logOut, sendChatMessage } from "./api";
 
 type AuthState = "checking" | "signed-out" | "signed-in";
@@ -263,7 +264,9 @@ export default function App() {
                 <Box key={message.id} className={`message-row ${message.role}`}>
                   {message.role === "assistant" && <Avatar className="message-avatar"><SmartToyRoundedIcon /></Avatar>}
                   <Paper elevation={0} className={`message-bubble ${message.role}`}>
-                    <Typography component="div" className="message-content">{message.content}</Typography>
+                    <Typography component="div" className={`message-content ${message.role}`}>
+                      {message.role === "assistant" ? <ReactMarkdown>{message.content}</ReactMarkdown> : message.content}
+                    </Typography>
                   </Paper>
                   {message.role === "user" && <Avatar className="user-avatar">Y</Avatar>}
                 </Box>
