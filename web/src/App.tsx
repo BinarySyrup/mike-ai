@@ -184,7 +184,7 @@ export default function App() {
                 value={loginCode}
                 onChange={(event) => setLoginCode(event.target.value)}
                 disabled={loginBusy}
-                inputProps={{ "aria-label": "Access code" }}
+                slotProps={{ htmlInput: { "aria-label": "Access code" } }}
               />
               {loginError && <Alert severity="error">{loginError}</Alert>}
               <Button
@@ -219,7 +219,7 @@ export default function App() {
             </Box>
           </Box>
 
-          <Stack direction="row" alignItems="center" spacing={1}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
             <Button
               className="new-chat-button"
               variant="outlined"
@@ -298,7 +298,7 @@ export default function App() {
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={handleComposerKeyDown}
               disabled={sending || logoutBusy}
-              inputProps={{ "aria-label": "Message MikeAI" }}
+              slotProps={{ htmlInput: { "aria-label": "Message MikeAI" } }}
             />
             <Tooltip title="Send message">
               <span>
