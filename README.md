@@ -64,6 +64,6 @@ Authentication logs include submitted access codes, so restrict log access. Logi
 
 ## Google Analytics
 
-Google Analytics is optional. Set `VITE_GA_MEASUREMENT_ID` in `web/.env.local` for local frontend builds or in the frontend deployment build environment. The value is public and embedded in the frontend bundle; do not put secrets in `VITE_*` variables. Analytics stays disabled when the variable is empty or invalid. Visitors can allow or decline analytics, and can change that choice later through the Privacy choices button. After opt-in, the app sends a generic page view for `/`; it does not send chat messages or access codes.
+Google Analytics is optional. Set `VITE_GA_MEASUREMENT_ID` in `web/.env.local` for local frontend builds or in the frontend deployment build environment. The value is public and embedded in the frontend bundle; do not put secrets in `VITE_*` variables. Analytics stays disabled when the variable is empty or invalid. When configured, the app sends a generic page view for `/`; it does not send chat messages or access codes.
 
 Python API documentation: [docs/operations/python-api.md](docs/operations/python-api.md).

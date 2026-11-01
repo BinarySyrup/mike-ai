@@ -1,5 +1,4 @@
-const initializedMeasurementIds = new Set<string>();
-let activeMeasurementId: string | null = null;
+let initializedMeasurementId: string | null = null;
 
 type Gtag = (...args: unknown[]) => void;
 
@@ -23,52 +22,30 @@ function getGtag(): Gtag {
   return gtag;
 }
 
-export function enableGoogleAnalytics(measurementId: string): void {
+export function initializeGoogleAnalytics(measurementId: string): void {
   if (!isValidMeasurementId(measurementId)) return;
-
-  const disabledFlag = `ga-disable-${measurementId}`;
-  Reflect.set(window, disabledFlag, false);
+  if (initializedMeasurementId === measurementId) return;
 
   const gtag = getGtag();
-  if (!initializedMeasurementIds.has(measurementId)) {
-    initializedMeasurementIds.add(measurementId);
-    gtag("js", new Date());
-    gtag("config", measurementId, {
-      send_page_view: false,
-      allow_google_signals: false,
-      allow_ad_personalization_signals: false,
-      page_location: `${window.location.origin}/`,
-      page_path: "/",
-      page_title: "MikeAI Chat",
-    });
+  initializedMeasurementId = measurementId;
+  gtag("js", new Date());
+  gtag("config", measurementId, {
+    send_page_view: false,
+    allow_google_signals: false,
+    allow_ad_personalization_signals: false,
+    page_location: `${window.location.origin}/`,
+    page_path: "/",
+    page_title: "MikeAI Chat",
+  });
 
-    const script = document.createElement("script");
-    script.async = true;
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
-    document.head.appendChild(script);
-  }
+  gtag("event", "page_view", {
+    page_location: `${window.location.origin}/`,
+    page_path: "/",
+    page_title: "MikeAI Chat",
+  });
 
-  if (activeMeasurementId !== measurementId) {
-    gtag("event", "page_view", {
-      page_location: `${window.location.origin}/`,
-      page_path: "/",
-      page_title: "MikeAI Chat",
-    });
-    activeMeasurementId = measurementId;
-  }
-}
-
-export function disableGoogleAnalytics(measurementId: string): void {
-  if (!isValidMeasurementId(measurementId)) return;
-
-  const disabledFlag = `ga-disable-${measurementId}`;
-  Reflect.set(window, disabledFlag, true);
-  if (activeMeasurementId === measurementId) activeMeasurementId = null;
-
-  for (const cookie of document.cookie.split(";")) {
-    const name = cookie.split("=", 1)[0]?.trim();
-    if (name === "_ga" || name === "_gid" || name?.startsWith("_ga_")) {
-      document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax`;
-    }
-  }
+  const script = document.createElement("script");
+  script.async = true;
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
+  document.head.appendChild(script);
 }
