@@ -383,6 +383,29 @@ body {
   text-align: center;
 }
 
+.analytics-consent,
+.analytics-preferences-control {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1300;
+}
+
+.analytics-consent {
+  display: grid;
+  gap: 10px;
+  width: min(430px, calc(100vw - 32px));
+  padding: 18px;
+  border: 1px solid #e5eaf2;
+}
+
+.analytics-preferences-control {
+  border: 1px solid #e5eaf2;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(23, 43, 82, 0.12);
+}
+
 @media (max-width: 600px) {
   .auth-card {
     padding: 30px 23px 25px;
