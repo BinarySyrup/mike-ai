@@ -2,7 +2,10 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import App from "./App";
+import { initializeGoogleAnalytics } from "./analytics";
 import "./styles.css";
+
+initializeGoogleAnalytics(import.meta.env.VITE_GA_MEASUREMENT_ID?.trim() ?? "");
 
 const theme = createTheme({
   palette: {
