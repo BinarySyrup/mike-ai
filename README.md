@@ -7,6 +7,31 @@ A personal AI assistant that answers questions about Mike's professional experie
 - `web/`: React, Vite, and Material UI frontend.
 - `api/`: Azure Static Web Apps Functions API, using Node.js 22 or newer.
 
+## How the app works
+
+Azure Static Web Apps serves the frontend and routes same-origin `/api` requests to the Functions API. When the page opens, the frontend checks for a valid session. If the visitor is signed out, they can submit an access code; the API checks it against `ACCESS_CODES` and, when accepted, returns a signed, HTTP-only session cookie that expires after 12 hours. The frontend sends that cookie with API requests, and logout clears it.
+
+The AI agent is hosted in Azure AI Foundry as a separately configured service. Learn more about [Azure AI Foundry Agent Service](https://azure.microsoft.com/en-us/products/ai-foundry/agent-service). The API uses the Foundry project endpoint and configured agent name and version to reach it, authenticating with server-side Microsoft Entra client credentials. For chat, the browser sends the current conversation transcript to `POST /api/chat`. The API verifies the session and validates the message roles and request size, then sends the transcript to the hosted agent. It returns the agent's reply as JSON for the frontend to render. The transcript is held in frontend memory for the current page session; each chat request includes the conversation so far.
+
+```mermaid
+flowchart TD
+    Browser["Visitor browser"] --> Static["Azure Static Web Apps<br/>serves frontend and routes /api"]
+    Static --> UI["React frontend"]
+    UI -->|"Page load: GET /api/auth/session"| Auth["Azure Functions<br/>authentication endpoints"]
+    Auth -->|"Valid session cookie"| ChatUI["Signed-in chat UI"]
+    Auth -->|"No valid session"| Code["Access code form"]
+    Code -->|"POST /api/auth/login"| Auth
+    Auth -->|"Accepted code: set signed HTTP-only cookie"| ChatUI
+    Auth -->|"Rejected code or throttled request"| LoginError["Sign-in error"]
+    LoginError --> Code
+    ChatUI -->|"POST /api/chat: cookie and full transcript"| ChatAPI["Azure Functions<br/>chat endpoint"]
+    ChatAPI --> Check{"Session and transcript valid?"}
+    Check -->|"No"| RequestError["Return API error"]
+    Check -->|"Yes"| Agent["Hosted Azure AI Foundry agent<br/>configured project, name, and version<br/>server-side Entra credentials"]
+    Agent -->|"Generated reply"| Response["API returns JSON reply"]
+    Response -->|"Render response"| ChatUI
+```
+
 ## Local setup
 
 From the repository root, install dependencies:
