@@ -16,20 +16,50 @@ import {
   Typography,
 } from "@mui/material";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
+import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
+import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
-import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
+import ThumbDownAltOutlinedIcon from "@mui/icons-material/ThumbDownAltOutlined";
+import ThumbUpAltOutlinedIcon from "@mui/icons-material/ThumbUpAltOutlined";
 import ReactMarkdown from "react-markdown";
 import { ApiError, checkSession, logIn, logOut, sendChatMessage } from "./api";
 
 type AuthState = "checking" | "signed-out" | "signed-in";
 type ChatMessage = { id: string; role: "user" | "assistant"; content: string };
+type Feedback = "helpful" | "not-helpful";
+
+const starterPrompts = [
+  "What's Mike's background?",
+  "What has he built on Azure?",
+  "Biggest career wins",
+  "Is he open to new roles?",
+  "Tell me a joke",
+];
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong. Please try again.";
 }
+
+function safeProfileUrl(value: string | undefined, allowMailto = false): string | undefined {
+  if (!value?.trim()) return undefined;
+
+  try {
+    const url = new URL(value.trim());
+    if (url.protocol === "https:" || (allowMailto && url.protocol === "mailto:")) return url.href;
+  } catch {
+    return undefined;
+  }
+
+  return undefined;
+}
+
+const linkedInUrl = safeProfileUrl(import.meta.env.VITE_LINKEDIN_URL || "https://www.linkedin.com/in/mcarroll12/");
+const githubUrl = safeProfileUrl(import.meta.env.VITE_GITHUB_URL || "https://github.com/BinarySyrup");
+const contactUrl = safeProfileUrl(import.meta.env.VITE_CONTACT_URL || "mailto:mike@binarysyrup.com", true);
 
 export default function App() {
   const [authState, setAuthState] = useState<AuthState>("checking");
@@ -41,6 +71,8 @@ export default function App() {
   const [sending, setSending] = useState(false);
   const [chatError, setChatError] = useState("");
   const [logoutBusy, setLogoutBusy] = useState(false);
+  const [feedback, setFeedback] = useState<Record<string, Feedback>>({});
+  const [copiedMessageId, setCopiedMessageId] = useState("");
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -62,7 +94,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    transcriptEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    transcriptEndRef.current?.scrollIntoView({ behavior, block: "end" });
   }, [messages, sending]);
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
@@ -82,6 +115,14 @@ export default function App() {
     }
   }
 
+  function clearChat() {
+    setMessages([]);
+    setDraft("");
+    setChatError("");
+    setFeedback({});
+    setCopiedMessageId("");
+  }
+
   async function handleLogout() {
     setLogoutBusy(true);
     try {
@@ -96,15 +137,8 @@ export default function App() {
     }
   }
 
-  function clearChat() {
-    setMessages([]);
-    setDraft("");
-    setChatError("");
-  }
-
-  async function handleSend(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const message = draft.trim();
+  async function submitMessage(value: string) {
+    const message = value.trim();
     if (!message || sending) return;
 
     const userMessage = { id: crypto.randomUUID(), role: "user" as const, content: message };
@@ -139,6 +173,65 @@ export default function App() {
     }
   }
 
+  async function handleSend(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await submitMessage(draft);
+  }
+
+  async function handleRegenerate(messageId: string) {
+    if (sending) return;
+    const messageIndex = messages.findIndex((message) => message.id === messageId);
+    if (messageIndex < 0) return;
+
+    const transcript = messages
+      .slice(0, messageIndex)
+      .map(({ role, content }) => ({ role, content }));
+    if (transcript.length === 0 || transcript.at(-1)?.role !== "user") return;
+
+    setSending(true);
+    setChatError("");
+    try {
+      const response = await sendChatMessage(transcript);
+      setMessages((current) => current.map((message) => (
+        message.id === messageId ? { ...message, content: response.reply } : message
+      )));
+      setFeedback((current) => {
+        const next = { ...current };
+        delete next[messageId];
+        return next;
+      });
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        clearChat();
+        setAuthState("signed-out");
+        setLoginError("Your web session has ended. Enter an access code to continue.");
+      } else {
+        setChatError(errorMessage(error));
+      }
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function handleCopy(message: ChatMessage) {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopiedMessageId(message.id);
+      window.setTimeout(() => setCopiedMessageId(""), 1800);
+    } catch {
+      setChatError("Couldn't copy that answer. Please select and copy it manually.");
+    }
+  }
+
+  function toggleFeedback(messageId: string, value: Feedback) {
+    setFeedback((current) => {
+      const next = { ...current };
+      if (current[messageId] === value) delete next[messageId];
+      else next[messageId] = value;
+      return next;
+    });
+  }
+
   function handleComposerKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -159,17 +252,14 @@ export default function App() {
     return (
       <Box className="auth-screen">
         <Container maxWidth="sm">
-          <Box className="brand-lockup auth-brand">
-            <Avatar className="brand-mark"><AutoAwesomeRoundedIcon /></Avatar>
-            <Box>
-              <Typography variant="h6" className="brand-name">MikeAI</Typography>
-              <Typography variant="caption" color="text.secondary">Private assistant</Typography>
-            </Box>
+          <Box className="auth-brand">
+            <Box component="img" className="auth-logo" src="/mikeai-logo.svg" alt="MikeAI" />
+            <Typography variant="caption" color="text.secondary">Private AI Assistant</Typography>
           </Box>
 
           <Paper className="auth-card" elevation={0}>
             <Avatar className="auth-icon"><LockRoundedIcon /></Avatar>
-            <Typography variant="h4" className="auth-title">Welcome back</Typography>
+            <Typography variant="h4" className="auth-title">Welcome to Mike AI</Typography>
             <Typography color="text.secondary" className="auth-description">
               Enter an access code to start a private chat session.
             </Typography>
@@ -211,24 +301,54 @@ export default function App() {
     <Box className="app-shell">
       <AppBar position="sticky" elevation={0} color="inherit" className="topbar">
         <Toolbar className="topbar-content">
-          <Box className="brand-lockup">
-            <Avatar className="brand-mark"><AutoAwesomeRoundedIcon /></Avatar>
-            <Box>
-              <Typography variant="subtitle1" className="brand-name">MikeAI</Typography>
-              <Typography variant="caption" color="text.secondary">AI assistant</Typography>
+          <Box className="profile-lockup">
+            <Box component="img" className="brand-mark" src="/mikeai-mark.svg" alt="MikeAI logo" />
+            <Box className="profile-copy">
+              <Typography variant="subtitle1" className="brand-name" aria-label="MikeAI">
+                Mike<Box component="span" className="brand-ai">AI</Box>
+              </Typography>
+              <Typography variant="body2" color="text.secondary">Software Architect | Engineering Leader | Software Engineer</Typography>
             </Box>
           </Box>
 
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <Button
-              className="new-chat-button"
-              variant="outlined"
-              startIcon={<AddRoundedIcon />}
-              onClick={clearChat}
-              disabled={sending || logoutBusy}
-            >
-              New chat
-            </Button>
+          <Stack direction="row" spacing={0.75} className="topbar-actions" sx={{ alignItems: "center" }}>
+            <Box className="online-status" aria-label="MikeAI is online">
+              <span className="online-dot" aria-hidden="true" />
+              <Typography variant="body2">Online</Typography>
+            </Box>
+
+            {(linkedInUrl || githubUrl) && (
+              <Box component="nav" className="social-links" aria-label="Professional profiles">
+                {linkedInUrl && (
+                  <Tooltip title="LinkedIn">
+                    <IconButton component="a" href={linkedInUrl} target="_blank" rel="noreferrer" aria-label="LinkedIn profile">
+                      <LinkedInIcon />
+                    </IconButton>
+                  </Tooltip>
+                )}
+                {githubUrl && (
+                  <Tooltip title="GitHub">
+                    <IconButton component="a" href={githubUrl} target="_blank" rel="noreferrer" aria-label="GitHub profile">
+                      <GitHubIcon />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Box>
+            )}
+
+            <Tooltip title="Start a new conversation">
+              <span>
+                <IconButton
+                  aria-label="Start a new conversation"
+                  className="new-chat-button"
+                  onClick={clearChat}
+                  disabled={sending || logoutBusy}
+                >
+                  <AddRoundedIcon />
+                </IconButton>
+              </span>
+            </Tooltip>
+
             <Tooltip title="End web session">
               <span>
                 <IconButton aria-label="Log out" onClick={handleLogout} disabled={logoutBusy || sending}>
@@ -242,82 +362,147 @@ export default function App() {
 
       <Container maxWidth="md" className="chat-container">
         <Box className="chat-heading">
-          <Typography variant="overline" className="eyebrow">YOUR PRIVATE ASSISTANT</Typography>
-          <Typography variant="h4" className="chat-title">What can I help with?</Typography>
-          <Typography color="text.secondary">
-            Ask a question to begin. A new conversation starts fresh, and chat history is not saved in this app.
+          <Typography variant="h4" className="chat-title">Ask Mike AI Anything</Typography>
+          <Typography color="text.secondary" className="chat-intro">
+            Career, projects, and skills, straight from Mike's background.
+            <br />
+            Occasional dad jokes at no extra charge.
           </Typography>
+          <Stack direction="row" useFlexGap flexWrap="wrap" className="starter-prompts" role="group" aria-label="Try asking">
+            {starterPrompts.map((prompt, index) => (
+              <Button
+                key={prompt}
+                type="button"
+                variant="outlined"
+                className={`starter-prompt${index === starterPrompts.length - 1 ? " joke-prompt" : ""}`}
+                onClick={() => void submitMessage(prompt)}
+                disabled={sending || logoutBusy}
+              >
+                {prompt}
+              </Button>
+            ))}
+          </Stack>
         </Box>
 
         <Box className="transcript" aria-live="polite" aria-label="Conversation">
-          {messages.length === 0 ? (
-            <Paper className="empty-state" elevation={0}>
-              <Avatar className="empty-avatar"><SmartToyRoundedIcon /></Avatar>
-              <Typography variant="h6">Start a new conversation</Typography>
-              <Typography color="text.secondary" variant="body2">
-                Your messages will appear here while this page is open.
-              </Typography>
-            </Paper>
-          ) : (
+          {messages.length > 0 && (
             <Stack spacing={2.5} className="message-list">
               {messages.map((message) => (
                 <Box key={message.id} className={`message-row ${message.role}`}>
-                  {message.role === "assistant" && <Avatar className="message-avatar"><SmartToyRoundedIcon /></Avatar>}
-                  <Paper elevation={0} className={`message-bubble ${message.role}`}>
-                    <Typography component="div" className={`message-content ${message.role}`}>
-                      {message.role === "assistant" ? <ReactMarkdown>{message.content}</ReactMarkdown> : message.content}
-                    </Typography>
-                  </Paper>
-                  {message.role === "user" && <Avatar className="user-avatar">Y</Avatar>}
+                  {message.role === "assistant" ? (
+                    <Box component="img" className="message-avatar" src="/mikeai-mark.svg" alt="" />
+                  ) : null}
+                  <Box className={`message-body ${message.role}`}>
+                    {message.role === "assistant" ? (
+                      <Typography component="div" className="message-content assistant">
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                      </Typography>
+                    ) : (
+                      <Paper elevation={0} className="message-bubble user">
+                        <Typography component="div" className="message-content user">{message.content}</Typography>
+                      </Paper>
+                    )}
+
+                    {message.role === "assistant" && (
+              <Stack direction="row" spacing={0.25} className="message-actions" role="group" aria-label="Answer actions">
+                        <Tooltip title={copiedMessageId === message.id ? "Copied" : "Copy answer"}>
+                          <IconButton size="small" aria-label="Copy answer" onClick={() => void handleCopy(message)}>
+                            <ContentCopyRoundedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Try again">
+                          <span>
+                            <IconButton
+                              size="small"
+                              aria-label="Regenerate answer"
+                              onClick={() => void handleRegenerate(message.id)}
+                              disabled={sending || messages[messages.length - 1]?.id !== message.id}
+                            >
+                              <RefreshRoundedIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                        <Tooltip title="Helpful">
+                          <IconButton
+                            size="small"
+                            aria-label="Mark answer helpful"
+                            aria-pressed={feedback[message.id] === "helpful"}
+                            className={feedback[message.id] === "helpful" ? "feedback-selected" : ""}
+                            onClick={() => toggleFeedback(message.id, "helpful")}
+                          >
+                            <ThumbUpAltOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Not helpful">
+                          <IconButton
+                            size="small"
+                            aria-label="Mark answer not helpful"
+                            aria-pressed={feedback[message.id] === "not-helpful"}
+                            className={feedback[message.id] === "not-helpful" ? "feedback-selected" : ""}
+                            onClick={() => toggleFeedback(message.id, "not-helpful")}
+                          >
+                            <ThumbDownAltOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    )}
+                  </Box>
                 </Box>
               ))}
               {sending && (
                 <Box className="message-row assistant" role="status">
-                  <Avatar className="message-avatar"><SmartToyRoundedIcon /></Avatar>
-                  <Paper elevation={0} className="message-bubble assistant typing-bubble">
+                  <Box component="img" className="message-avatar" src="/mikeai-mark.svg" alt="" />
+                  <Box className="message-body assistant typing-response">
                     <CircularProgress size={16} />
                     <Typography variant="body2" color="text.secondary">Thinking…</Typography>
-                  </Paper>
+                  </Box>
                 </Box>
               )}
               <div ref={transcriptEndRef} />
             </Stack>
           )}
         </Box>
-
-        <Box component="form" onSubmit={handleSend} className="composer-area">
-          {chatError && <Alert severity="warning" onClose={() => setChatError("")}>{chatError}</Alert>}
-          <Paper className="composer" elevation={0}>
-            <TextField
-              fullWidth
-              multiline
-              minRows={1}
-              maxRows={6}
-              placeholder="Message MikeAI…"
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={handleComposerKeyDown}
-              disabled={sending || logoutBusy}
-              slotProps={{ htmlInput: { "aria-label": "Message MikeAI" } }}
-            />
-            <Tooltip title="Send message">
-              <span>
-                <IconButton
-                  type="submit"
-                  aria-label="Send message"
-                  className="send-button"
-                  disabled={sending || logoutBusy || !draft.trim()}
-                >
-                  {sending ? <CircularProgress size={20} color="inherit" /> : <SendRoundedIcon />}
-                </IconButton>
-              </span>
-            </Tooltip>
-          </Paper>
-          <Typography variant="caption" color="text.secondary" className="composer-caption">
-            Conversations are temporary and are not saved by this app.
-          </Typography>
-        </Box>
       </Container>
+
+      <Box className="composer-dock">
+        <Container maxWidth="md" className="composer-container">
+          {chatError && <Alert severity="warning" onClose={() => setChatError("")}>{chatError}</Alert>}
+          <Box component="form" onSubmit={handleSend} className="composer-form">
+            <Paper className="composer" elevation={0}>
+              <TextField
+                fullWidth
+                multiline
+                minRows={1}
+                maxRows={6}
+                placeholder="Ask about Mike's career, or his questionable puns"
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={handleComposerKeyDown}
+                disabled={sending || logoutBusy}
+                slotProps={{ htmlInput: { "aria-label": "Ask Mike about his career" } }}
+              />
+              <Tooltip title="Send message">
+                <span>
+                  <IconButton
+                    type="submit"
+                    aria-label="Send message"
+                    className="send-button"
+                    disabled={sending || logoutBusy || !draft.trim()}
+                  >
+                    {sending ? <CircularProgress size={20} color="inherit" /> : <SendRoundedIcon />}
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </Paper>
+          </Box>
+          <Typography variant="caption" color="text.secondary" className="composer-caption">
+            {contactUrl && (
+              <>AI-generated answers about Mike. For anything official, <Box component="a" href={contactUrl} className="contact-link">contact him directly.</Box></>
+            )}
+            {!contactUrl && "AI-generated answers about Mike. For anything official, contact him directly."}
+          </Typography>
+        </Container>
+      </Box>
     </Box>
   );
 }
