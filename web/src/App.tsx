@@ -368,7 +368,7 @@ export default function App() {
             <br />
             Occasional dad jokes at no extra charge.
           </Typography>
-          <Stack direction="row" useFlexGap flexWrap="wrap" className="starter-prompts" role="group" aria-label="Try asking">
+          <Stack direction="row" useFlexGap className="starter-prompts" role="group" aria-label="Try asking">
             {starterPrompts.map((prompt, index) => (
               <Button
                 key={prompt}
