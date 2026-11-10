@@ -75,7 +75,7 @@ export default function App() {
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [feedback, setFeedback] = useState<Record<string, Feedback>>({});
   const [copiedMessageId, setCopiedMessageId] = useState("");
-  const [starterPrompts] = useState(() => chooseStarterPrompts(4));
+  const [starterPrompts, setStarterPrompts] = useState(() => chooseStarterPrompts(5));
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -393,6 +393,19 @@ export default function App() {
                 {prompt}
               </Button>
             ))}
+            <Tooltip title="Refresh suggested prompts">
+              <span>
+                <IconButton
+                  type="button"
+                  aria-label="Refresh suggested prompts"
+                  onClick={() => setStarterPrompts(chooseStarterPrompts(5))}
+                  disabled={sending || logoutBusy}
+                  size="small"
+                >
+                  <RefreshRoundedIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
           </Stack>
         </Box>
 
