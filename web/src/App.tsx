@@ -27,18 +27,20 @@ import ThumbDownAltOutlinedIcon from "@mui/icons-material/ThumbDownAltOutlined";
 import ThumbUpAltOutlinedIcon from "@mui/icons-material/ThumbUpAltOutlined";
 import ReactMarkdown from "react-markdown";
 import { ApiError, checkSession, logIn, logOut, sendChatMessage } from "./api";
+import { STARTER_PROMPT_POOL } from "./constants";
 
 type AuthState = "checking" | "signed-out" | "signed-in";
 type ChatMessage = { id: string; role: "user" | "assistant"; content: string };
 type Feedback = "helpful" | "not-helpful";
 
-const starterPrompts = [
-  "What's Mike's background?",
-  "What has he built on Azure?",
-  "Biggest career wins",
-  "Is he open to new roles?",
-  "Tell me a joke",
-];
+function chooseStarterPrompts(randomCount: number): string[] {
+  const prompts = [...STARTER_PROMPT_POOL];
+  for (let index = prompts.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [prompts[index], prompts[swapIndex]] = [prompts[swapIndex], prompts[index]];
+  }
+  return [...prompts.slice(0, randomCount), "Tell me a joke"];
+}
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong. Please try again.";
@@ -73,6 +75,7 @@ export default function App() {
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [feedback, setFeedback] = useState<Record<string, Feedback>>({});
   const [copiedMessageId, setCopiedMessageId] = useState("");
+  const [starterPrompts] = useState(() => chooseStarterPrompts(4));
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -290,6 +293,15 @@ export default function App() {
             </Box>
             <Typography variant="caption" color="text.secondary" className="access-note">
               Access is limited to people with a valid code.
+              <br />
+              To request an access code, email{" "}
+              <Box
+                component="a"
+                href="mailto:mike@binarysyrup.com?subject=MikeAI%20Access%20Code%20Request%20Please%20Sir&body=Please%20sir%2C%20can%20you%20spare%20an%20access%20code%3F"
+                className="contact-link"
+              >
+                mike@binarysyrup.com
+              </Box>.
             </Typography>
           </Paper>
         </Container>
@@ -369,12 +381,12 @@ export default function App() {
             Occasional dad jokes at no extra charge.
           </Typography>
           <Stack direction="row" useFlexGap className="starter-prompts" role="group" aria-label="Try asking">
-            {starterPrompts.map((prompt, index) => (
+            {starterPrompts.map((prompt) => (
               <Button
                 key={prompt}
                 type="button"
                 variant="outlined"
-                className={`starter-prompt${index === starterPrompts.length - 1 ? " joke-prompt" : ""}`}
+                className={`starter-prompt${prompt === "Tell me a joke" ? " joke-prompt" : ""}`}
                 onClick={() => void submitMessage(prompt)}
                 disabled={sending || logoutBusy}
               >
