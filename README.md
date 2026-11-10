@@ -66,4 +66,6 @@ Authentication logs include submitted access codes, so restrict log access. Logi
 
 Google Analytics is optional. Set `VITE_GA_MEASUREMENT_ID` in `web/.env.local` for local frontend builds or in the frontend deployment build environment. The value is public and embedded in the frontend bundle; do not put secrets in `VITE_*` variables. Analytics stays disabled when the variable is empty or invalid. When configured, the app sends a generic page view for `/`; it does not send chat messages or access codes.
 
+Optional profile links are configured with `VITE_LINKEDIN_URL`, `VITE_GITHUB_URL`, and `VITE_CONTACT_URL` in `web/.env.local` or the frontend deployment build environment. LinkedIn defaults to `https://www.linkedin.com/in/mcarroll12/`, GitHub defaults to `https://github.com/BinarySyrup`, and contact defaults to `mailto:mike@binarysyrup.com`. These values are public and embedded in the frontend bundle. LinkedIn and GitHub links must use HTTPS; contact accepts an HTTPS URL or a `mailto:` address. Empty or invalid links are hidden.
+
 Python API documentation: [docs/operations/python-api.md](docs/operations/python-api.md).
